@@ -36,6 +36,7 @@ theta = rand(n,num_classes-1)*0.001;
 % TODO:  Implement batch softmax regression in the softmax_regression_vec.m
 % file using a vectorized implementation.
 %
+% gcheck = grad_check(@softmax_regression_vec, theta(:), 100, train.X, train.y)
 tic;
 theta(:)=minFunc(@softmax_regression_vec, theta(:), options, train.X, train.y);
 fprintf('Optimization took %f seconds.\n', toc);

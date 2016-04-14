@@ -72,9 +72,10 @@ activations = zeros(convDim,convDim,numFilters,numImages);
 activationsPooled = zeros(outputDim,outputDim,numFilters,numImages);
 
 %%% YOUR CODE HERE %%%
-
+activations = activations + cnnConvolve(filterDim, numFilters, images, Wc, bc);
 % Reshape activations into 2-d matrix, hiddenSize x numImages,
 % for Softmax layer
+activationsPooled = activationsPooled + cnnPool(poolDim, activations);
 activationsPooled = reshape(activationsPooled,[],numImages);
 
 %% Softmax Layer
@@ -89,15 +90,22 @@ probs = zeros(numClasses,numImages);
 
 %%% YOUR CODE HERE %%%
 
+softmax = bsxfun(@plus, Wd * activationsPooled, bd);
+% softmax = bsxfun(@minus, softmax, max(softmax));
+softmax = exp(softmax);
+probs = probs + bsxfun(@rdivide, softmax, sum(softmax, 1));
+
 %%======================================================================
 %% STEP 1b: Calculate Cost
 %  In this step you will use the labels given as input and the probs
 %  calculate above to evaluate the cross entropy objective.  Store your
 %  results in cost.
 
-cost = 0; % save objective into cost
-
 %%% YOUR CODE HERE %%%
+
+index = sub2ind(size(probs), labels', 1:numImages);
+cost = -sum(log(probs(index))); % save objective into cost
+cost = cost / numImages;
 
 % Makes predictions given probs and returns without backproagating errors.
 if pred
@@ -118,7 +126,21 @@ end;
 %  quickly.
 
 %%% YOUR CODE HERE %%%
-
+y_labels = zeros(numClasses, numImages);
+y_labels(index) = 1;
+delta = probs - y_labels;
+delta = delta / numImages;
+deltad = Wd' * delta;
+deltad = reshape(deltad, outputDim, outputDim, numFilters, numImages);
+deltap = zeros(convDim, convDim, numFilters, numImages);
+unpool = ones(poolDim) / poolDim ^ 2;
+for filterNum = 1:numFilters
+    for imageNum = 1:numImages
+        deltap(:, :, filterNum, imageNum) = kron(deltad(:, :, filterNum, imageNum), unpool);
+    end
+end
+deltac = deltap .* activations .* (1 - activations);
+        
 %%======================================================================
 %% STEP 1d: Gradient Calculation
 %  After backpropagating the errors above, we can use them to calculate the
@@ -128,6 +150,22 @@ end;
 %  for that filter with each image and aggregate over images.
 
 %%% YOUR CODE HERE %%%
+Wd_grad = Wd_grad + delta * activationsPooled';
+bd_grad = bd_grad + sum(delta, 2);
+
+for filterNum = 1:numFilters
+    err = deltac(:, :, filterNum, :);
+    bc_grad(filterNum) = sum(err(:));
+end
+
+for imageNum = 1:numImages
+        image = squeeze(images(:, :, imageNum));
+    for filterNum = 1:numFilters
+        filter = rot90(deltac(:, :, filterNum, imageNum), 2);
+        deltawc = conv2(image, filter, 'valid');
+        Wc_grad(:, :, filterNum) = Wc_grad(:, :, filterNum) + deltawc;
+    end
+end
 
 %% Unroll gradient into grad vector for minFunc
 grad = [Wc_grad(:) ; Wd_grad(:) ; bc_grad(:) ; bd_grad(:)];

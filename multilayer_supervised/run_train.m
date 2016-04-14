@@ -9,6 +9,7 @@ ei = [];
 % add common directory to your path for
 % minfunc and mnist data helpers
 addpath ../common;
+addpath ../ex1;
 addpath(genpath('../common/minFunc_2012/minFunc'));
 
 %% load mnist data
@@ -43,6 +44,7 @@ options.maxFunEvals = 1e6;
 options.Method = 'lbfgs';
 
 %% run training
+gcheck = grad_check(@supervised_dnn_cost, params, 300, ei, data_train, labels_train)
 [opt_params,opt_value,exitflag,output] = minFunc(@supervised_dnn_cost,...
     params,options,ei, data_train, labels_train);
 

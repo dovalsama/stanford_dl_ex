@@ -29,6 +29,7 @@ theta = rand(n,1)*0.001;
 %
 % TODO:  Implement batch logistic regression in the logistic_regression.m file!
 %
+% gcheck = grad_check(@logistic_regression, theta, 100, train.X, train.y)
 tic;
 theta=minFunc(@logistic_regression, theta, options, train.X, train.y);
 fprintf('Optimization took %f seconds.\n', toc);

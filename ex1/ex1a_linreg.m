@@ -42,6 +42,7 @@ theta = rand(n,1);
 % TODO:  Implement the linear regression objective and gradient computations
 % in linear_regression.m
 %
+gcheck = grad_check(@linear_regression, theta, 100, train.X, train.y)
 tic;
 options = struct('MaxIter', 200);
 theta = minFunc(@linear_regression, theta, options, train.X, train.y);
